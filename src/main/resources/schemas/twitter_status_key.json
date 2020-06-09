@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "StatusKey",
+  "namespace": "com.github.jcustenborder.kafka.connect.twitter",
+  "fields": [
+    {
+      "name": "Id",
+      "type": [
+        "null",
+        "long"
+      ],
+      "default": null
+    }
+  ],
+  "connect.doc": "Key for a twitter status.",
+  "connect.name": "com.github.jcustenborder.kafka.connect.twitter.StatusKey"
+}
