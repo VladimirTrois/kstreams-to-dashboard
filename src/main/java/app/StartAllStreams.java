@@ -25,23 +25,5 @@ public class StartAllStreams
 //        {
 //            e.printStackTrace();
 //        }
-
-        final JsonPOJOSerde<UserTweetRetweetCount> userInfluenceSerde = new JsonPOJOSerde<>(UserTweetRetweetCount.class);
-        final JsonPOJOSerde<UserInfluenceTop30> userInfluenceTop30Serde = new JsonPOJOSerde<>(UserInfluenceTop30.class);
-
-        UserTweetRetweetCount userTweetRetweetCount = new UserTweetRetweetCount();
-//        userTweetRetweetCount.setScreen_name("Test");
-//        userTweetRetweetCount.addTweetStatus();
-//        userTweetRetweetCount.addTweetStatus();
-        //userInfluenceTest.addTweetStatus();
-        //userInfluenceTest.addTweetStatus();
-
-        System.out.println(userTweetRetweetCount);
-        byte[] serialized = userInfluenceSerde.getSerde().serializer().serialize("lol", userTweetRetweetCount);
-        System.out.println(serialized);
-        UserTweetRetweetCount userInfluenceDeserialized = userInfluenceSerde.getSerde().deserializer().deserialize("lol", serialized);
-        System.out.println(userInfluenceDeserialized);
-        System.out.println(userInfluenceDeserialized.equals(userTweetRetweetCount));
-
     }
 }

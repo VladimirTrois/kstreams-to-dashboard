@@ -125,7 +125,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>org.example.StreamsStarterApp</mainClass>
+                            <mainClass>app.StartAllStreams</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
