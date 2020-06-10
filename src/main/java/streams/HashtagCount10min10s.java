@@ -20,7 +20,7 @@ public class HashtagCount10min10s extends StreamsForDashboard {
   public final static String OUTPUT_TOPIC = KafkaConfig.DASHBOARD_DATA_TOPIC;
 
   public String APP_ID() {
-    return "HashtagCount10min10s_test";
+    return "HashtagCount10min10s";
   }
 
   protected void setTopology(StreamsBuilder builder) {
