@@ -6,6 +6,7 @@ import model.dashboardFormat.HashtagTop20;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
 import tools.JsonPOJOSerde;
@@ -19,7 +20,7 @@ public class HashtagCount10min10s extends StreamsForDashboard {
   public final static String OUTPUT_TOPIC = KafkaConfig.DASHBOARD_DATA_TOPIC;
 
   public String APP_ID() {
-    return "HashtagCount10min10s";
+    return "HashtagCount10min10s_test";
   }
 
   protected void setTopology(StreamsBuilder builder) {
@@ -43,19 +44,18 @@ public class HashtagCount10min10s extends StreamsForDashboard {
         .windowedBy(TimeWindows.of(windowSize).advanceBy(windowAdvance).grace(windowGrace))
         .count(Materialized.as("hastag_count_store"))
         .suppress(Suppressed.untilWindowCloses(unbounded()))
-        .mapValues((key, value) -> new HashtagCount(key.key(), value))
-        //.groupBy((key, value) -> key.window().endTime().toEpochMilli(), Grouped.with(Serdes.Long(), hashtagCountSerde.getSerde()))
+        .mapValues((key, value) -> new HashtagCount(key.key(), value),Named.as("to_hashtagcount"))
+        .groupBy((key, value) -> KeyValue.pair(key.window().endTime().toEpochMilli(), value), Grouped.with(Serdes.Long(), hashtagCountSerde.getSerde()))
         .aggregate(
             () -> new HashtagTop20(),
             (key, value, agg) -> (HashtagTop20) agg.add(value),
+            (key, value, agg) -> (HashtagTop20) agg.remove(value),
             Materialized.as("hastag_top_n_store").with(Serdes.Long(), hashtagTop20Serde.getSerde())
         )
-//        .count()
         .toStream()
-        .peek((key, value) -> System.out.println(key + " " + value))
-//        .mapValues(key -> key.toDashboardFormatString())
-//        .peek((key, value) -> System.out.println(key + " " + value))
-    //.to(OUTPUT_TOPIC, Produced.with(Serdes.Long(), Serdes.String()))
+        .mapValues(key -> key.toDashboardFormatString(),Named.as("to_dahboard_format"))
+        //.peek((key, value) -> System.out.println(key + " " + value))
+        .to(OUTPUT_TOPIC, Produced.with(Serdes.Long(), Serdes.String()))
     ;
   }
 }
