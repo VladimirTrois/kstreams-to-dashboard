@@ -8,7 +8,6 @@ C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\model\UserTweetRetweetCount.java
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\app\HashtagCount10min10sStart.java
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\app\TweetCount1s500msStart.java
-C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\app\Verify.java
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\model\dashboardFormat\HashtagTop20.java
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\streams\TweetCount1s500ms.java
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\model\entityCount\EntityCount.java
@@ -34,6 +33,7 @@ C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\app\TweetCount5sStart.java
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\tools\JsonPOJOSerializer.java
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\model\entityCount\LangCount.java
+C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\app\Consumer.java
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\app\StartAllStreams.java
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\model\dashboardFormat\TweetMap.java
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\model\entityCount\HashtagCount.java
@@ -41,3 +41,4 @@ C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\model\entityCount\UserCount.java
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\streams\HashtagCount10min10s.java
 C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\model\dashboardFormat\LangTop10.java
+C:\Users\vtrois\Documents\Nexworld\Projects\kstreams-to-dashboard\src\main\java\app\StreamStarter.java
