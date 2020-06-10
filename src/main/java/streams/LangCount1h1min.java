@@ -29,21 +29,21 @@ public class LangCount1h1min extends StreamsForDashboard {
     final JsonPOJOSerde<LangTop10> langTop10Serde = new JsonPOJOSerde<>(LangTop10.class);
 
     getIngestionTweetStream(builder)
-        .filter((key, value) -> false == value.get("Lang").toString().equals("und")) //Filter out tweet with undefined language
+        .filter((key, value) -> false == value.get("Lang").toString().equals("und"), Named.as("filter_out_undefined_language"))
         .groupBy((key, value) -> value.get("Lang").toString(), Grouped.with(Serdes.String(), valueGenericAvroSerde))
         .windowedBy(TimeWindows.of(windowSize).advanceBy(windowAdvance).grace(windowGrace))
-        .count()
+        .count(Materialized.as("lang_count_store"))
         .suppress(Suppressed.untilWindowCloses(unbounded()))
         .toStream()
-        .mapValues((key, value) -> new LangCount(key.key(), value))
+        .mapValues((key, value) -> new LangCount(key.key(), value), Named.as("count_to_POJO"))
         .groupBy((key, value) -> key.window().endTime().toEpochMilli(), Grouped.with(Serdes.Long(), langCountSerde.getSerde()))
         .aggregate(
             () -> new LangTop10(),
             (key, value, agg) -> (LangTop10) agg.add(value),
-            Materialized.with(Serdes.Long(), langTop10Serde.getSerde())
+            Materialized.as("lang_count_top_n_store").with(Serdes.Long(), langTop10Serde.getSerde())
         )
         .toStream()
-        .mapValues(value -> value.toDashboardFormatString())
+        .mapValues(value -> value.toDashboardFormatString(),Named.as("to_dashboard_format"))
         //.peek((key, value) -> System.out.println(key + " " + value))
         .to(OUTPUT_TOPIC, Produced.with(Serdes.Long(), Serdes.String()))
     ;

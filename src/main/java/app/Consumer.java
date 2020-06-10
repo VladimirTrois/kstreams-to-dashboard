@@ -15,15 +15,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Properties;
 
-public class Verify
+public class Consumer
 {
 
     public static void main(String[] args)
     {
         Properties props = getConsumerProperties();
-        KafkaConsumer<String, GenericRecord> kafkaConsumer = new KafkaConsumer<>(props);
+        KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(props);
 
-        TopicPartition partition = new TopicPartition("twitter_ingestion",0);
+        TopicPartition partition = new TopicPartition("topic_without_schema",0);
         Collection<TopicPartition> topics = Collections.singleton(partition);
         kafkaConsumer.assign(topics);
 
@@ -31,14 +31,15 @@ public class Verify
         {
             kafkaConsumer.seekToBeginning(topics);
             System.out.println("Restart");
-            ConsumerRecords<String, GenericRecord> records = kafkaConsumer.poll(Duration.ofMillis(1000));
+            ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(1000));
             int i = 0;
-            for (ConsumerRecord<String, GenericRecord> record : records)
+            for (ConsumerRecord<String, String> record : records)
             {
-                GenericRecord genericRecord = record.value();
+                System.out.println(record.key() + " " + record.value());
+                //GenericRecord genericRecord = record.value();
 
                 //ConsumerRecord<Windowed<String>, Long> test= record;
-                System.out.println(record.offset() + " " + genericRecord.get("CreatedAt") + " " + genericRecord.get("Id"));
+                //System.out.println(record.offset() + " " + genericRecord.get("CreatedAt") + " " + genericRecord.get("Id"));
                 //System.out.println((record.key().window().endTime().toEpochMilli() + " " + windowTime.getTime()));
 
                 if (i > 3)

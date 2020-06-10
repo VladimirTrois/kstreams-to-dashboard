@@ -19,7 +19,7 @@ public class InfluentialUser1h30s extends StreamsForDashboard {
   public final static String OUTPUT_TOPIC = KafkaConfig.DASHBOARD_DATA_TOPIC;
 
   public String APP_ID() {
-    return "InfluentialUserTop30Verified";
+    return "InfluentialUser1h30s";
   }
 
   protected void setTopology(StreamsBuilder builder) {
@@ -33,20 +33,13 @@ public class InfluentialUser1h30s extends StreamsForDashboard {
 
     getIngestionTweetStream(builder)
         .filter((key, value) -> statusWithOriginalTweetUserVerified(value))
-        .selectKey((key, value) -> {
-          if (true == (boolean) value.get("Retweet")) {
-            GenericRecord retweetStatus = (GenericRecord) value.get("RetweetedStatus");
-            return (GenericRecord) retweetStatus.get("User");
-          } else {
-            return (GenericRecord) value.get("User");
-          }
-        })
+        .selectKey((key, value) -> getOriginalTweetUser(value), Named.as("select_tweet_or_retweet_user"))
         .groupByKey(Grouped.with(keyGenericAvroSerde, valueGenericAvroSerde))
         .windowedBy(TimeWindows.of(windowSize).advanceBy(windowAdvance).grace(windowGrace))
         .aggregate(
             () -> new UserTweetRetweetCount(),
             (key, value, agg) -> agg.addTweetStatus(value),
-            Materialized.with(keyGenericAvroSerde, UserTweetRetweetCountSerde.getSerde())
+            Materialized.as("tweet_retweet_count_store").with(keyGenericAvroSerde, UserTweetRetweetCountSerde.getSerde())
         )
         .suppress(Suppressed.untilWindowCloses(unbounded()))
         .toStream()
@@ -55,13 +48,22 @@ public class InfluentialUser1h30s extends StreamsForDashboard {
         .aggregate(
             () -> new UserInfluenceTop30(),
             (key, value, agg) -> (UserInfluenceTop30) agg.add(value),
-            Materialized.with(Serdes.Long(), userInfluenceTop30Serde.getSerde())
+            Materialized.as("influential_user_top_n_store").with(Serdes.Long(), userInfluenceTop30Serde.getSerde())
         )
         .toStream()
         .mapValues((key, value) -> value.toDashboardFormatString())
         //.peek((key, value) -> System.out.println(key + " " + " " + value))
         .to(OUTPUT_TOPIC, Produced.with(Serdes.Long(), Serdes.String()))
     ;
+  }
+
+  private GenericRecord getOriginalTweetUser(GenericRecord value) {
+    GenericRecord user = (GenericRecord) value.get("User");
+    if (true == (boolean) value.get("Retweet")) {
+      GenericRecord retweetStatus = (GenericRecord) value.get("RetweetedStatus");
+      user = (GenericRecord) retweetStatus.get("User");
+    }
+    return user;
   }
 
   private boolean statusWithOriginalTweetUserVerified(GenericRecord value) {

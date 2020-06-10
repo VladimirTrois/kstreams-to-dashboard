@@ -28,7 +28,7 @@ public class SentimentAnalysis10s extends StreamsForDashboard {
   private HttpClient client = HttpClient.newHttpClient();
 
   public String APP_ID() {
-    return "SentimentAnalysis10sTest2";
+    return "SentimentAnalysis10s";
   }
 
   protected void setTopology(StreamsBuilder builder) {
@@ -38,13 +38,13 @@ public class SentimentAnalysis10s extends StreamsForDashboard {
     final JsonPOJOSerde<SentimentAnalysis> sentimentAnalysisSerde = new JsonPOJOSerde<>(SentimentAnalysis.class);
 
     getIngestionTweetStream(builder)
-        .filter((key, value) -> true == value.get("Lang").toString().equals("en")) //Keep onlly english tweets
+        .filter((key, value) -> true == value.get("Lang").toString().equals("en"),Named.as("filter_in_english")) //Keep onlly english tweets
         .groupBy((key, value) -> value.get("Lang").toString(), Grouped.with(Serdes.String(), valueGenericAvroSerde))
         .windowedBy(TimeWindows.of(windowSize).grace(windowGrace))
         .aggregate(
             SentimentAnalysis::new,
             (key, value, agg) -> agg.addSentiment(sentimentAnalysis(value)),
-            Materialized.with(Serdes.String(), sentimentAnalysisSerde.getSerde())
+            Materialized.as("sentiment_count_store").with(Serdes.String(), sentimentAnalysisSerde.getSerde())
         )
         .suppress(Suppressed.untilWindowCloses(unbounded()))
         .toStream()
