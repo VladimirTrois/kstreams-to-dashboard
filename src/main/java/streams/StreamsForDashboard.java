@@ -37,7 +37,7 @@ public abstract class StreamsForDashboard implements Startable {
     StreamsBuilder builder = new StreamsBuilder();
     setTopology(builder);
     KafkaStreams mainStream = new KafkaStreams(builder.build(), streamsConfiguration);
-    mainStream.cleanUp();
+    //mainStream.cleanUp();
     mainStream.start();
     Runtime.getRuntime().addShutdownHook(new Thread(mainStream::close));
   }
