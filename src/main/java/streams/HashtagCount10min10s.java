@@ -1,23 +1,27 @@
 package streams;
 
 import config.KafkaConfig;
-import model.entityCount.HashtagCount;
-import model.dashboardFormat.HashtagTop20;
+import model.dashboardFormat.HashtagTopN;
+import model.CountingList;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.JsonPOJOSerde;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import static org.apache.kafka.streams.kstream.Suppressed.BufferConfig.unbounded;
 
 public class HashtagCount10min10s extends StreamsForDashboard {
   public final static String INPUT_TOPIC = KafkaConfig.TWITTER_INGESTION_TOPIC;
   public final static String OUTPUT_TOPIC = KafkaConfig.DASHBOARD_DATA_TOPIC;
+  final static Logger logger = LoggerFactory.getLogger(HashtagCount10min10s.class.getName());
 
   public String APP_ID() {
     return "HashtagCount10min10s";
@@ -28,34 +32,28 @@ public class HashtagCount10min10s extends StreamsForDashboard {
     final Duration windowAdvance = Duration.ofSeconds(10);
     final Duration windowGrace = Duration.ofMillis(100);
 
-    final JsonPOJOSerde<HashtagCount> hashtagCountSerde = new JsonPOJOSerde<>(HashtagCount.class);
-    final JsonPOJOSerde<HashtagTop20> hashtagTop20Serde = new JsonPOJOSerde<>(HashtagTop20.class);
+    final JsonPOJOSerde<CountingList> countListSerde = new JsonPOJOSerde<>(CountingList.class);
 
     getIngestionTweetStream(builder)
         .mapValues(value -> (GenericArray) value.get("HashtagEntities"))
         .flatMapValues(new ValueMapper<GenericArray, Iterable<GenericRecord>>() {
-                         @Override public Iterable<GenericRecord> apply(GenericArray genericArray) {
-                           return genericArray;
-                         }
-                       }
-        )
-        .mapValues(value -> value.get("Text").toString().toLowerCase())
-        .groupBy((key, value) -> value, Grouped.with(Serdes.String(), Serdes.String()))
+          @Override public Iterable<GenericRecord> apply(GenericArray genericArray) {
+            return genericArray;
+          }
+        })
+        .mapValues((key, value) -> value.get("Text").toString().toLowerCase())
+        .groupBy((key, value) -> "all", Grouped.with(Serdes.String(), Serdes.String()))
         .windowedBy(TimeWindows.of(windowSize).advanceBy(windowAdvance).grace(windowGrace))
-        .count(Materialized.as("hastag_count_store"))
-        .suppress(Suppressed.untilWindowCloses(unbounded()))
-        .mapValues((key, value) -> new HashtagCount(key.key(), value),Named.as("to_hashtagcount"))
-        .groupBy((key, value) -> KeyValue.pair(key.window().endTime().toEpochMilli(), value), Grouped.with(Serdes.Long(), hashtagCountSerde.getSerde()))
         .aggregate(
-            () -> new HashtagTop20(),
-            (key, value, agg) -> (HashtagTop20) agg.add(value),
-            (key, value, agg) -> (HashtagTop20) agg.remove(value),
-            Materialized.as("hastag_top_n_store").with(Serdes.Long(), hashtagTop20Serde.getSerde())
-        )
+            () -> new CountingList(),
+            (key, value, agg) -> agg.add(value),
+            Materialized.as("counting_list").with(Serdes.String(), countListSerde.getSerde()))
+        .suppress(Suppressed.untilWindowCloses(unbounded()).withName("window_suppress"))
         .toStream()
-        .mapValues(key -> key.toDashboardFormatString(),Named.as("to_dahboard_format"))
-        //.peek((key, value) -> System.out.println(key + " " + value))
-        .to(OUTPUT_TOPIC, Produced.with(Serdes.Long(), Serdes.String()))
+        .mapValues((key, value) -> new HashtagTopN(value))
+        .mapValues((key, value) -> value.toDashboardFormatString())
+        //.peek((key, value) -> logger.info(LocalDateTime.ofInstant(key.window().endTime(), ZoneOffset.UTC) + " " + value))
+        .to(OUTPUT_TOPIC, Produced.with(windowedStringSerde, Serdes.String()))
     ;
   }
 }

@@ -1,20 +1,25 @@
 package streams;
 
 import config.KafkaConfig;
-import model.entityCount.LangCount;
-import model.dashboardFormat.LangTop10;
+import model.dashboardFormat.LangTopN;
+import model.CountingList;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.JsonPOJOSerde;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import static org.apache.kafka.streams.kstream.Suppressed.BufferConfig.unbounded;
 
 public class LangCount1h1min extends StreamsForDashboard {
   public final static String INPUT_TOPIC = KafkaConfig.TWITTER_INGESTION_TOPIC;
   public final static String OUTPUT_TOPIC = KafkaConfig.DASHBOARD_DATA_TOPIC;
+  final static Logger logger = LoggerFactory.getLogger(LangCount1h1min.class.getName());
 
   public String APP_ID() {
     return "LangCount1h1min";
@@ -25,27 +30,23 @@ public class LangCount1h1min extends StreamsForDashboard {
     final Duration windowAdvance = Duration.ofMinutes(1);
     final Duration windowGrace = Duration.ofMillis(500);
 
-    final JsonPOJOSerde<LangCount> langCountSerde = new JsonPOJOSerde<>(LangCount.class);
-    final JsonPOJOSerde<LangTop10> langTop10Serde = new JsonPOJOSerde<>(LangTop10.class);
+    final JsonPOJOSerde<CountingList> countingListSerde = new JsonPOJOSerde<>(CountingList.class);
 
     getIngestionTweetStream(builder)
         .filter((key, value) -> false == value.get("Lang").toString().equals("und"), Named.as("filter_out_undefined_language"))
-        .groupBy((key, value) -> value.get("Lang").toString(), Grouped.with(Serdes.String(), valueGenericAvroSerde))
+        .mapValues((key, value) -> value.get("Lang").toString())
+        .groupBy((key, value) -> "all", Grouped.with(Serdes.String(), Serdes.String()))
         .windowedBy(TimeWindows.of(windowSize).advanceBy(windowAdvance).grace(windowGrace))
-        .count(Materialized.as("lang_count_store"))
-        .suppress(Suppressed.untilWindowCloses(unbounded()))
-        .toStream()
-        .mapValues((key, value) -> new LangCount(key.key(), value), Named.as("count_to_POJO"))
-        .groupBy((key, value) -> key.window().endTime().toEpochMilli(), Grouped.with(Serdes.Long(), langCountSerde.getSerde()))
         .aggregate(
-            () -> new LangTop10(),
-            (key, value, agg) -> (LangTop10) agg.add(value),
-            Materialized.as("lang_count_top_n_store").with(Serdes.Long(), langTop10Serde.getSerde())
-        )
+            () -> new CountingList(),
+            (key, value, agg) -> agg.add(value),
+            Materialized.as("counting_list").with(Serdes.String(), countingListSerde.getSerde()))
+        .suppress(Suppressed.untilWindowCloses(unbounded()).withName("window_suppress"))
         .toStream()
-        .mapValues(value -> value.toDashboardFormatString(),Named.as("to_dashboard_format"))
-        //.peek((key, value) -> System.out.println(key + " " + value))
-        .to(OUTPUT_TOPIC, Produced.with(Serdes.Long(), Serdes.String()))
+        .mapValues((key, value) -> new LangTopN(value))
+        .mapValues((key, value) -> value.toDashboardFormatString())
+        //.peek((key, value) -> logger.info(LocalDateTime.ofInstant(key.window().endTime(), ZoneOffset.UTC) + " " + value))
+        .to(OUTPUT_TOPIC, Produced.with(windowedStringSerde, Serdes.String()))
     ;
   }
 }

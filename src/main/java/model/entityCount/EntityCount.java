@@ -6,66 +6,70 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.util.Objects;
 
-public abstract class EntityCount implements Comparable, Serializable
-{
-    protected String entity;
-    protected Long count;
+public abstract class EntityCount implements Comparable, Serializable {
+  protected String entity;
+  protected String entityName = null;
+  protected Long count;
 
-    public EntityCount()
-    {
-    }
+  public EntityCount() {
+  }
 
-    @JsonCreator public EntityCount(@JsonProperty("entity") String entity, @JsonProperty("count") Long count)
-    {
-        this.entity = entity;
-        this.count = count;
-    }
+  @JsonCreator public EntityCount(@JsonProperty("entity") String entity, @JsonProperty("count") Long count) {
+    this.entity = entity;
+    this.count = count;
+  }
 
-    @JsonProperty("entity")
-    public String getEntity()
-    {
-        return entity;
-    }
+  public EntityCount(String entity, Long count, String entityName) {
+    this.entity = entity;
+    this.entityName = entityName;
+    this.count = count;
+  }
 
-    @JsonProperty("entity")
-    public void setEntity(String entity)
-    {
-        this.entity = entity;
-    }
+  @JsonProperty("entity")
+  public String getEntity() {
+    return entity;
+  }
 
-    @JsonProperty("count")
-    public Long getCount()
-    {
-        return count;
-    }
+  @JsonProperty("entity")
+  public void setEntity(String entity) {
+    this.entity = entity;
+  }
 
-    @JsonProperty("count")
-    public void setCount(Long count)
-    {
-        this.count = count;
-    }
+  @JsonProperty("count")
+  public Long getCount() {
+    return count;
+  }
 
-    @Override public int compareTo(Object o)
-    {
-        return this.count <= ((EntityCount) o).count ? 1 : -1;
-    }
+  @JsonProperty("count")
+  public void setCount(Long count) {
+    this.count = count;
+  }
 
-    @Override public boolean equals(Object o)
-    {
-        if (this == o)
-        {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
-        EntityCount entityCount = (EntityCount) o;
-        return entity.equals(entityCount.entity);
-    }
+  @Override public int compareTo(Object o) {
+    return this.count <= ((EntityCount) o).count ? 1 : -1;
+  }
 
-    @Override public int hashCode()
-    {
-        return Objects.hash(entity, count);
+  @Override public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    EntityCount entityCount = (EntityCount) o;
+    return entity.equals(entityCount.entity);
+  }
+
+  @Override public int hashCode() {
+    return Objects.hash(entity, count);
+  }
+
+  public EntityCount add() {
+    count = count + 1;
+    return this;
+  }
+
+  @Override public String toString() {
+    return "{" + entityName + "=" + entity + "," + "count=" + count + "}";
+  }
 }

@@ -8,15 +8,21 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.JsonPOJOSerde;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import static org.apache.kafka.streams.kstream.Suppressed.BufferConfig.unbounded;
 
 public class InfluentialUser1h30s extends StreamsForDashboard {
   public final static String INPUT_TOPIC = KafkaConfig.TWITTER_INGESTION_TOPIC;
   public final static String OUTPUT_TOPIC = KafkaConfig.DASHBOARD_DATA_TOPIC;
+  final static Logger logger = LoggerFactory.getLogger(InfluentialUser1h30s.class.getName());
 
   public String APP_ID() {
     return "InfluentialUser1h30s";
@@ -52,7 +58,7 @@ public class InfluentialUser1h30s extends StreamsForDashboard {
         )
         .toStream()
         .mapValues((key, value) -> value.toDashboardFormatString())
-        //.peek((key, value) -> System.out.println(key + " " + " " + value))
+        //.peek((key, value) -> logger.info(key + " " + value))
         .to(OUTPUT_TOPIC, Produced.with(Serdes.Long(), Serdes.String()))
     ;
   }

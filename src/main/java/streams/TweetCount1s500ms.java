@@ -27,7 +27,7 @@ public class TweetCount1s500ms extends StreamsForDashboard {
 
     //Creating topology
     getIngestionTweetStream(builder)
-        .groupBy((key, value) -> "tweets", Grouped.with(Serdes.String(), valueGenericAvroSerde))
+        .groupBy((key, value) -> "all", Grouped.with(Serdes.String(), valueGenericAvroSerde))
         .windowedBy(TimeWindows.of(windowSize).advanceBy(windowAdvance).grace(windowGrace))
         .count(Materialized.as("tweet_count_store"))
         .suppress(Suppressed.untilWindowCloses(unbounded()))

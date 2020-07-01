@@ -32,4 +32,8 @@ public abstract class TopNFormat<T> extends DashboardFormat {
   public void setData(TreeSet<T> data) {
     this.data = data;
   }
+
+  @Override public String toString() {
+    return "{label=" + label + ", data=" + data.toString() + "}";
+  }
 }
