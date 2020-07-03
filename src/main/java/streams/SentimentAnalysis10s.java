@@ -9,6 +9,8 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.JsonPOJOSerde;
 
 import java.net.URI;
@@ -22,7 +24,8 @@ import static org.apache.kafka.streams.kstream.Suppressed.BufferConfig.unbounded
 public class SentimentAnalysis10s extends StreamsForDashboard {
   public final static String INPUT_TOPIC = KafkaConfig.TWITTER_INGESTION_TOPIC;
   public final static String OUTPUT_TOPIC = KafkaConfig.DASHBOARD_DATA_TOPIC;
-  public final static String SENTIMENT_API_URL = "http://5bc0ec37-cddb-4f26-8db4-d203b06d7b21.westeurope.azurecontainer.io/score/score";
+  public final static String SENTIMENT_API_URL = "http://5bc0ec37-cddb-4f26-8db4-d203b06d7b21.westeurope.azurecontainer.io/score";
+  final static Logger logger = LoggerFactory.getLogger(SentimentAnalysis10s.class.getName());
 
   private HttpClient client = HttpClient.newHttpClient();
 
@@ -59,7 +62,6 @@ public class SentimentAnalysis10s extends StreamsForDashboard {
 
   private String sentimentAnalysis(GenericRecord value) {
     String sentimentAnalyse = null;
-
     ObjectMapper mapper = new ObjectMapper();
     ObjectNode requestJson = mapper.createObjectNode();
     ArrayNode texts = mapper.createArrayNode();
@@ -84,7 +86,6 @@ public class SentimentAnalysis10s extends StreamsForDashboard {
     } catch (Exception e) {
       e.printStackTrace();
     }
-
     return sentimentAnalyse;
   }
 }
