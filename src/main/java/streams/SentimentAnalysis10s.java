@@ -22,7 +22,7 @@ import static org.apache.kafka.streams.kstream.Suppressed.BufferConfig.unbounded
 public class SentimentAnalysis10s extends StreamsForDashboard {
   public final static String INPUT_TOPIC = KafkaConfig.TWITTER_INGESTION_TOPIC;
   public final static String OUTPUT_TOPIC = KafkaConfig.DASHBOARD_DATA_TOPIC;
-  public final static String SENTIMENT_API_URL = "http://7f3f0cc9-669b-4926-8804-a671f00867a1.westeurope.azurecontainer.io/score";
+  public final static String SENTIMENT_API_URL = "http://5bc0ec37-cddb-4f26-8db4-d203b06d7b21.westeurope.azurecontainer.io/score/score";
 
   private HttpClient client = HttpClient.newHttpClient();
 
